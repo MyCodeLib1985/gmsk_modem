@@ -5,7 +5,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O1 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O0 -ggdb -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -30,7 +30,7 @@ endif
 
 # Enable this if you want link time optimizations (LTO)
 ifeq ($(USE_LTO),)
-  USE_LTO = yes
+  USE_LTO = no
 endif
 
 # If enabled, this option allows to compile the application in THUMB mode.
@@ -81,6 +81,7 @@ PROJECT = ch
 
 # Imported source files and paths
 CHIBIOS = ../ChibiOS-RT
+#CHIBIOS = ../../chibios-svn
 include $(CHIBIOS)/os/hal/hal.mk
 include board/board.mk
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F1xx/platform.mk
@@ -104,7 +105,9 @@ CSRC = $(PORTSRC) \
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CPPSRC = main.cpp
+CPPSRC = main.cpp \
+         $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
+         $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
@@ -131,7 +134,7 @@ ASMSRC = $(PORTASM)
 
 INCDIR = $(PORTINC) $(KERNINC) $(TESTINC) \
          $(HALINC) $(OSALINC) $(PLATFORMINC) $(BOARDINC) \
-         $(CHIBIOS)/os/various
+         $(CHIBIOS)/os/various $(CHIBIOS)/os/various/cpp_wrappers 
 
 #
 # Project, sources and paths
@@ -145,8 +148,8 @@ MCU  = cortex-m3
 
 #TRGT = arm-elf-
 TRGT = arm-none-eabi-
-CC   = $(TRGT)gcc
-CPPC = $(TRGT)g++
+CC   = ccache $(TRGT)gcc
+CPPC = ccache $(TRGT)g++
 # Enable loading with g++ only if you need C++ runtime support.
 # NOTE: You can use C++ even without C++ support if you are careful. C++
 #       runtime support makes code size explode.
@@ -159,6 +162,7 @@ OD   = $(TRGT)objdump
 SZ   = $(TRGT)size
 HEX  = $(CP) -O ihex
 BIN  = $(CP) -O binary
+SREC = $(CP) -O srec
 
 # ARM-specific options here
 AOPT =

@@ -17,6 +17,8 @@
 #include "ch.h"
 #include "hal.h"
 
+
+
 static virtual_timer_t vt1, vt2;
 
 static void restart(void *p) {
@@ -140,6 +142,7 @@ int main(void) {
    */
   while (TRUE) {
     chThdSleepMilliseconds(500);
+    palTogglePad(IOPORT2, GPIOB_LED_G);
   }
   return 0;
 }
