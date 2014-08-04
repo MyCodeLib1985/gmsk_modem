@@ -4,3 +4,5 @@
 *.pyc
 *.float64
 *.orig
+*.project
+*.cproject
