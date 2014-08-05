@@ -107,7 +107,9 @@ CSRC = $(PORTSRC) \
 # setting.
 CPPSRC = main.cpp \
          $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
-         $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp
+         $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
+         exti_local.cpp \
+         softmodem.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler

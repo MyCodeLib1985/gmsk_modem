@@ -14,9 +14,8 @@
     limitations under the License.
 */
 
-#include "ch.h"
-#include "hal.h"
-
+#include "main.h"
+#include "exti_local.hpp"
 
 
 static virtual_timer_t vt1, vt2;
@@ -126,6 +125,8 @@ int main(void) {
    */
   halInit();
   chSysInit();
+
+  ExtiLocalStart();
 
   /*
    * Activates the serial driver 2 using the driver default configuration.
