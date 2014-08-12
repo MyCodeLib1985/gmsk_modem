@@ -1,6 +1,6 @@
 #include "main.h"
 
-#include "softmodem.hpp"
+#include "softmodem.h"
 
 /*
  ******************************************************************************

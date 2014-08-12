@@ -1,7 +1,7 @@
 #include "main.h"
 #include "stdlib.h"
 
-#include "codec_8b10b.hpp"
+#include "codec_8b10b.h"
 
 /*
  ******************************************************************************

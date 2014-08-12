@@ -15,7 +15,7 @@
 */
 
 #include "main.h"
-#include "exti_local.hpp"
+#include "exti_local.h"
 
 
 static virtual_timer_t vt1, vt2;

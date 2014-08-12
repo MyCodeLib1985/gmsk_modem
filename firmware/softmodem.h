@@ -1,5 +1,5 @@
-#ifndef SOFTMODEM_HPP_
-#define SOFTMODEM_HPP_
+#ifndef SOFTMODEM_H_
+#define SOFTMODEM_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -12,4 +12,4 @@ extern "C" {
 }
 #endif
 
-#endif /* SOFTMODEM_HPP_ */
+#endif /* SOFTMODEM_H_ */

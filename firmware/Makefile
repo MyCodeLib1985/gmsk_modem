@@ -10,12 +10,12 @@ endif
 
 # C specific options here (added to USE_OPT).
 ifeq ($(USE_COPT),)
-  USE_COPT = 
+  USE_COPT = -std=gnu11
 endif
 
 # C++ specific options here (added to USE_OPT).
 ifeq ($(USE_CPPOPT),)
-  USE_CPPOPT = -fno-rtti
+  USE_CPPOPT = -fno-rtti -std=gnu++11
 endif
 
 # Enable this if you want the linker to remove unused code and data
@@ -102,15 +102,15 @@ CSRC = $(PORTSRC) \
        $(OSALSRC) \
        $(PLATFORMSRC) \
        $(BOARDSRC) \
+       main.c \
+       exti_local.c \
+       softmodem.c \
+       codec_8b10b.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
-CPPSRC = main.cpp \
-         $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
+CPPSRC = $(CHIBIOS)/os/various/cpp_wrappers/syscalls_cpp.cpp \
          $(CHIBIOS)/os/various/cpp_wrappers/ch.cpp \
-         exti_local.cpp \
-         softmodem.cpp \
-         codec_8b10b.cpp \
 
 # C sources to be compiled in ARM mode regardless of the global setting.
 # NOTE: Mixing ARM and THUMB mode enables the -mthumb-interwork compiler
