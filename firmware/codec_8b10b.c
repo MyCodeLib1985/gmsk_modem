@@ -207,7 +207,7 @@ static void fill_decode_tables(void){
 /**
  *
  */
-static void check_seq_len(uint32_t code){
+static void self_test_seq_len(uint32_t code){
   size_t seqlen = 0;
   size_t bit;
   size_t prev_bit;
@@ -301,7 +301,7 @@ void self_test_8b10b(const uint8_t *datap, size_t len){
     osalDbgCheck(decode_8b10b(code & 1023) == byte);
     osalDbgCheck(abs(RD) < 2);
     osalDbgCheck(abs(block_disparity(code, 10)) < 3);
-    check_seq_len(code);
+    self_test_seq_len(code);
   }
 }
 
