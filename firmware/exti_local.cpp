@@ -61,7 +61,7 @@ static void txcb(EXTDriver *extp, expchannel_t channel){
   (void)extp;
   (void)channel;
 
-  if (0 == ModemGet())
+  if (0 == ModemOutBit())
     palClearPad(IOPORT1, GPIOA_TX_DATA);
   else
     palSetPad(IOPORT1, GPIOA_TX_DATA);
@@ -70,7 +70,11 @@ static void txcb(EXTDriver *extp, expchannel_t channel){
 static void rxcb(EXTDriver *extp, expchannel_t channel){
   (void)extp;
   (void)channel;
-  ModemPut(0);
+
+  if (PAL_LOW == palReadPad(IOPORT2, GPIOB_RX_DATA))
+    ModemInBit(0);
+  else
+    ModemInBit(1);
 }
 
 /*

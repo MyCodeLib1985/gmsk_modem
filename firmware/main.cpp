@@ -143,6 +143,7 @@ int main(void) {
    */
   while (TRUE) {
     chThdSleepMilliseconds(500);
+    uartStartSend(&UARTD1, 13, "Starting...\r\n");
     palTogglePad(IOPORT2, GPIOB_LED_G);
   }
   return 0;

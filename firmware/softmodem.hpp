@@ -6,8 +6,8 @@ extern "C" {
 #endif
   void ModemObjectInit(void);
   void ModemStart(void);
-  unsigned int ModemGet(void);
-  void ModemPut(unsigned int bit);
+  unsigned int ModemOutBit(void);
+  void ModemInBit(unsigned int bit);
 #ifdef __cplusplus
 }
 #endif

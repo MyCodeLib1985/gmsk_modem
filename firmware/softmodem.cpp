@@ -1,6 +1,8 @@
 #include "main.h"
 #include "softmodem.hpp"
 
+#include "codec_8b10b.hpp"
+
 /*
  ******************************************************************************
  * DEFINES
@@ -79,10 +81,8 @@ void ModemObjectInit(void){
   fill_test_pattern();
 }
 
-/**
- *
- */
-unsigned int ModemGet(void){
+
+unsigned int ModemOutBit_deprecated(void){
   unsigned int ret;
 
   ret = (txbuf[txword] >> txbit) & 1;
@@ -99,22 +99,65 @@ unsigned int ModemGet(void){
   return ret;
 }
 
+
+
+
+static uint8_t *datap = (uint8_t *)0x8000000;
+static uint32_t txcode;
 /**
- *
+ * provide next bit to be transmitted via radio channel
  */
-void ModemPut(unsigned int bit){
-  (void)bit;
-  (void)rxbuf;
-  (void)rxword;
-  (void)rxbit;
+unsigned int ModemOutBit(void){
+
+  unsigned int ret;
+
+  ret = (txcode >> txbit) & 1;
+  txbit++;
+
+  if (10 == txbit){
+    txbit = 0;
+    txword++;
+    txcode = encode(datap[txword]);
+    if (20000 == txword){
+      txword = 0;
+    }
+  }
+
+  return ret;
+}
+
+
+
+/**
+ * decode received bit
+ */
+void ModemInBit(unsigned int bit){
+
+  rxbuf[rxword] |= bit << rxbit;
+  rxbit++;
+
+  if ((8 * sizeof(rxbuf[0])) == rxbit){
+    rxbit = 0;
+    rxword++;
+    if (SOFTMODEM_RX_LEN == rxword){
+      rxword = 0;
+    }
+  }
 }
 
 /**
  *
  */
 void ModemStart(void){
+
+  codec_8b10b_init();
+  encode_test();
+
   ModemObjectInit();
   palSetPad(IOPORT2, GPIOB_TX_ENABLE);
   palClearPad(IOPORT2, GPIOB_TX_PS);
+  palClearPad(IOPORT2, GPIOB_RX_PS);
+
+  palSetPad(IOPORT2, GPIOB_PTT);
 }
 
