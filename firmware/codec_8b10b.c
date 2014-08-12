@@ -48,7 +48,6 @@ static const uint8_t enc_34_pos[] = {
     0b0001, // 0b1000 - alternate
 };
 
-
 static const uint8_t enc_56_pos[] = {
     0b011000,
     0b100010,
@@ -121,6 +120,9 @@ static const uint8_t enc_56_neg[] = {
 
 static int RD = -1; /* running disparity */
 
+/*
+ * decoding stuff
+ */
 #define VALUE_INVALID         0xFF
 static uint8_t dec_65[64];
 static uint8_t dec_43[16];
@@ -133,6 +135,9 @@ static uint8_t dec_43[16];
  ******************************************************************************
  */
 
+/**
+ *
+ */
 static int block_disparity(uint32_t data, size_t bits){
   int ret = 0;
 
@@ -149,39 +154,75 @@ static int block_disparity(uint32_t data, size_t bits){
 /**
  *
  */
-static void fill_decode_table(void){
+static void decode_tab_helper(const uint8_t *enc_array,
+                      size_t enc_array_len, uint8_t *dec_array){
   size_t idx;
   uint8_t val;
 
+  for (val=0; val<enc_array_len; val++){
+    idx = enc_array[val];
+    osalDbgCheck((dec_array[idx] == val) || (dec_array[idx] == VALUE_INVALID));
+    dec_array[idx] = val;
+  }
+}
+
+/**
+ *
+ */
+static void fill_decode_tables(void){
+
   for (size_t i=0; i<sizeof(dec_65); i++)
     dec_65[i] = VALUE_INVALID;
-
-  for (val=0; val<sizeof(enc_56_neg); val++){
-    idx = enc_56_neg[val];
-    osalDbgCheck((dec_65[idx] == val) || (dec_65[idx] == VALUE_INVALID));
-    dec_65[idx] = val;
-  }
-  for (val=0; val<sizeof(enc_56_pos); val++){
-    idx = enc_56_pos[val];
-    osalDbgCheck((dec_65[idx] == val) || (dec_65[idx] == VALUE_INVALID));
-    dec_65[idx] = val;
-  }
-
+  decode_tab_helper(enc_56_neg, sizeof(enc_56_neg), dec_65);
+  decode_tab_helper(enc_56_pos, sizeof(enc_56_pos), dec_65);
 
   for (size_t i=0; i<sizeof(dec_43); i++)
     dec_43[i] = VALUE_INVALID;
+  decode_tab_helper(enc_34_neg, sizeof(enc_34_neg), dec_43);
+  decode_tab_helper(enc_34_pos, sizeof(enc_34_pos), dec_43);
 
-  for (val=0; val<sizeof(enc_34_neg); val++){
-    idx = enc_34_neg[val];
-    osalDbgCheck((dec_43[idx] == val) || (dec_43[idx] == VALUE_INVALID));
-    dec_43[idx] = val;
-  }
-  for (val=0; val<sizeof(enc_34_pos); val++){
-    idx = enc_34_pos[val];
-    osalDbgCheck((dec_43[idx] == val) || (dec_43[idx] == VALUE_INVALID));
-    dec_43[idx] = val;
+//  for (val=0; val<sizeof(enc_56_neg); val++){
+//    idx = enc_56_neg[val];
+//    osalDbgCheck((dec_65[idx] == val) || (dec_65[idx] == VALUE_INVALID));
+//    dec_65[idx] = val;
+//  }
+//  for (val=0; val<sizeof(enc_56_pos); val++){
+//    idx = enc_56_pos[val];
+//    osalDbgCheck((dec_65[idx] == val) || (dec_65[idx] == VALUE_INVALID));
+//    dec_65[idx] = val;
+//  }
+//
+//  for (val=0; val<sizeof(enc_34_neg); val++){
+//    idx = enc_34_neg[val];
+//    osalDbgCheck((dec_43[idx] == val) || (dec_43[idx] == VALUE_INVALID));
+//    dec_43[idx] = val;
+//  }
+//  for (val=0; val<sizeof(enc_34_pos); val++){
+//    idx = enc_34_pos[val];
+//    osalDbgCheck((dec_43[idx] == val) || (dec_43[idx] == VALUE_INVALID));
+//    dec_43[idx] = val;
+//  }
+}
+
+/**
+ *
+ */
+static void check_seq_len(uint32_t code){
+  size_t seqlen = 0;
+  size_t bit;
+  size_t prev_bit;
+
+  for (size_t i=0; i<32; i++){
+    prev_bit = code & 1;
+    code >>= 1;
+    bit = code & 1;
+    if (bit == prev_bit)
+      seqlen++;
+    else
+      seqlen = 0;
   }
 
+  osalDbgCheck(seqlen < 5);
 }
 
 /*
@@ -194,13 +235,13 @@ static void fill_decode_table(void){
  *
  */
 void codec_8b10b_init(void){
-  fill_decode_table();
+  fill_decode_tables();
 }
 
 /**
  * The disparity of a block is calculated by the number of 1’s minus the number of 0’s.
  */
-uint32_t encode(uint8_t data){
+uint32_t encode_8b10b(uint8_t data){
   uint32_t ret = 0;
   uint32_t tmp = 0;
 
@@ -245,39 +286,18 @@ uint8_t decode_8b10b(uint32_t code){
   return HGF << 5 | EDCBA;
 }
 
-/*
- *
- */
-static void check_seq_len(uint32_t code){
-  size_t seqlen = 0;
-  size_t bit;
-  size_t prev_bit;
-
-  for (size_t i=0; i<32; i++){
-    prev_bit = code & 1;
-    code >>= 1;
-    bit = code & 1;
-    if (bit == prev_bit)
-      seqlen++;
-    else
-      seqlen = 0;
-  }
-
-  osalDbgCheck(seqlen < 5);
-}
-
 /**
  *
  */
-void encode_test(void){
-  uint8_t *datap = (uint8_t *)0x8000000;
+void self_test_8b10b(const uint8_t *datap, size_t len){
+
   uint32_t code = 0x55555555;
   uint8_t byte;
 
-  for (size_t i=0; i<20000; i++){
+  for (size_t i=0; i<len; i++){
     byte = datap[i];
     code <<= 10;
-    code |= encode(byte);
+    code |= encode_8b10b(byte);
     osalDbgCheck(decode_8b10b(code & 1023) == byte);
     osalDbgCheck(abs(RD) < 2);
     osalDbgCheck(abs(block_disparity(code, 10)) < 3);

@@ -36,6 +36,10 @@ static uint8_t rxbuf[SOFTMODEM_RX_LEN];
 static size_t rxword = 0;
 static size_t rxbit = 0;
 
+static const uint8_t *testdatap = (uint8_t *)0x8000000;
+static size_t testdatalen = 20000;
+static uint32_t txcode = 0;
+
 /*
  ******************************************************************************
  ******************************************************************************
@@ -81,29 +85,6 @@ void ModemObjectInit(void){
   fill_test_pattern();
 }
 
-
-unsigned int ModemOutBit_deprecated(void){
-  unsigned int ret;
-
-  ret = (txbuf[txword] >> txbit) & 1;
-  txbit++;
-
-  if ((8 * sizeof(txbuf[0])) == txbit){
-    txbit = 0;
-    txword++;
-    if (SOFTMODEM_TX_LEN == txword){
-      txword = 0;
-    }
-  }
-
-  return ret;
-}
-
-
-
-
-static uint8_t *datap = (uint8_t *)0x8000000;
-static uint32_t txcode;
 /**
  * provide next bit to be transmitted via radio channel
  */
@@ -117,7 +98,7 @@ unsigned int ModemOutBit(void){
   if (10 == txbit){
     txbit = 0;
     txword++;
-    txcode = encode(datap[txword]);
+    txcode = encode_8b10b(testdatap[txword]);
     if (20000 == txword){
       txword = 0;
     }
@@ -125,8 +106,6 @@ unsigned int ModemOutBit(void){
 
   return ret;
 }
-
-
 
 /**
  * decode received bit
@@ -151,7 +130,7 @@ void ModemInBit(unsigned int bit){
 void ModemStart(void){
 
   codec_8b10b_init();
-  encode_test();
+  self_test_8b10b(testdatap, testdatalen);
 
   ModemObjectInit();
   palSetPad(IOPORT2, GPIOB_TX_ENABLE);
