@@ -1,4 +1,4 @@
-#include "main.h"
+#include "codec_osal.h"
 #include "stdlib.h"
 
 #include "codec_8b10b.h"
@@ -123,7 +123,7 @@ static int RD = -1; /* running disparity */
 /*
  * decoding stuff
  */
-#define VALUE_INVALID         0xFF
+#define INVALID_VALUE         0xFF
 static uint8_t dec_65[64];
 static uint8_t dec_43[16];
 
@@ -161,7 +161,7 @@ static void decode_tab_helper(const uint8_t *enc_array,
 
   for (val=0; val<enc_array_len; val++){
     idx = enc_array[val];
-    osalDbgCheck((dec_array[idx] == val) || (dec_array[idx] == VALUE_INVALID));
+    osalDbgCheck((dec_array[idx] == val) || (dec_array[idx] == INVALID_VALUE));
     dec_array[idx] = val;
   }
 }
@@ -172,36 +172,14 @@ static void decode_tab_helper(const uint8_t *enc_array,
 static void fill_decode_tables(void){
 
   for (size_t i=0; i<sizeof(dec_65); i++)
-    dec_65[i] = VALUE_INVALID;
+    dec_65[i] = INVALID_VALUE;
   decode_tab_helper(enc_56_neg, sizeof(enc_56_neg), dec_65);
   decode_tab_helper(enc_56_pos, sizeof(enc_56_pos), dec_65);
 
   for (size_t i=0; i<sizeof(dec_43); i++)
-    dec_43[i] = VALUE_INVALID;
+    dec_43[i] = INVALID_VALUE;
   decode_tab_helper(enc_34_neg, sizeof(enc_34_neg), dec_43);
   decode_tab_helper(enc_34_pos, sizeof(enc_34_pos), dec_43);
-
-//  for (val=0; val<sizeof(enc_56_neg); val++){
-//    idx = enc_56_neg[val];
-//    osalDbgCheck((dec_65[idx] == val) || (dec_65[idx] == VALUE_INVALID));
-//    dec_65[idx] = val;
-//  }
-//  for (val=0; val<sizeof(enc_56_pos); val++){
-//    idx = enc_56_pos[val];
-//    osalDbgCheck((dec_65[idx] == val) || (dec_65[idx] == VALUE_INVALID));
-//    dec_65[idx] = val;
-//  }
-//
-//  for (val=0; val<sizeof(enc_34_neg); val++){
-//    idx = enc_34_neg[val];
-//    osalDbgCheck((dec_43[idx] == val) || (dec_43[idx] == VALUE_INVALID));
-//    dec_43[idx] = val;
-//  }
-//  for (val=0; val<sizeof(enc_34_pos); val++){
-//    idx = enc_34_pos[val];
-//    osalDbgCheck((dec_43[idx] == val) || (dec_43[idx] == VALUE_INVALID));
-//    dec_43[idx] = val;
-//  }
 }
 
 /**
@@ -241,9 +219,9 @@ void codec_8b10b_init(void){
 /**
  * The disparity of a block is calculated by the number of 1’s minus the number of 0’s.
  */
-uint32_t encode_8b10b(uint8_t data){
-  uint32_t ret = 0;
-  uint32_t tmp = 0;
+uint16_t encode_8b10b(uint8_t data){
+  uint16_t ret = 0;
+  uint16_t tmp = 0;
 
   uint8_t EDCBA = data & 0b11111;
   uint8_t HGF   = (data >> 5) & 0b111;
@@ -268,7 +246,7 @@ uint32_t encode_8b10b(uint8_t data){
 /**
  *
  */
-uint8_t decode_8b10b(uint32_t code){
+uint16_t decode_8b10b(uint16_t code){
   osalDbgCheck(code <= 1023);
 
   uint8_t EDCBA;
@@ -277,13 +255,16 @@ uint8_t decode_8b10b(uint32_t code){
 
   idx = code & 0b1111;
   HGF = dec_43[idx];
-  osalDbgCheck(HGF != VALUE_INVALID);
+  //osalDbgCheck(HGF != INVALID_VALUE);
 
   idx = code >> 4;
   EDCBA = dec_65[idx];
-  osalDbgCheck(EDCBA != VALUE_INVALID);
+  //osalDbgCheck(EDCBA != INVALID_VALUE);
 
-  return HGF << 5 | EDCBA;
+  if ((INVALID_VALUE == HGF) || (INVALID_VALUE == EDCBA))
+    return DECODE_FAILED;
+  else
+    return HGF << 5 | EDCBA;
 }
 
 /**
