@@ -28,7 +28,7 @@
  * GLOBAL VARIABLES
  ******************************************************************************
  */
-static uint8_t txbuf[SOFTMODEM_TX_LEN];
+//static uint8_t txbuf[SOFTMODEM_TX_LEN];
 static size_t txword = 0;
 static size_t txbit = 0;
 
@@ -45,7 +45,7 @@ static uint16_t sync_buf = 0;
 static bool sync = false;
 
 static size_t success_bytes = 0;
-static size_t failed_bytes = 0;
+static size_t sync_lost = 0;
 static size_t total_bits = 0;
 /*
  ******************************************************************************
@@ -99,7 +99,7 @@ unsigned int ModemOutBit(void){
 
   unsigned int ret;
 
-  ret = (txcode >> txbit) & 1;
+  ret = (txcode >> (9 - txbit)) & 1;
   txbit++;
 
   if (10 == txbit){
@@ -138,9 +138,8 @@ void ModemInBit(unsigned int bit){
 
   if (false == sync){
     ret = catch_sync(bit);
-    if (DECODE_FAILED != ret){
+    if (DECODE_FAILED != ret)
       store_byte(ret & 0xFF);
-    }
     sync = true;
   }
   else{
@@ -148,15 +147,14 @@ void ModemInBit(unsigned int bit){
     rxbuf |= bit;
     rxbit++;
     if (10 == rxbit){
+      ret = decode_8b10b(rxbuf & 1023);
       rxbit = 0;
-      ret = decode_8b10b(rxbuf);
-      if (DECODE_FAILED != ret){
+      if (DECODE_FAILED != ret)
         store_byte(ret & 0xFF);
-      }
       else{
         sync = false;
         sync_buf = 0;
-        failed_bytes++;
+        sync_lost++;
       }
     }
   }
@@ -175,6 +173,6 @@ void ModemStart(void){
   palClearPad(IOPORT2, GPIOB_TX_PS);
   palClearPad(IOPORT2, GPIOB_RX_PS);
 
-  palSetPad(IOPORT2, GPIOB_PTT);
+  palClearPad(IOPORT2, GPIOB_PTT);
 }
 
